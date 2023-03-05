@@ -1,4 +1,6 @@
 import { TMap } from './algorithms/a_star';
+import Cell from './algorithms/a_star/cell';
+import AStarAlgorithm from './algorithms/a_star/a_star';
 
 export type TDrawerOptions = {
   canvas: HTMLCanvasElement;
@@ -18,7 +20,7 @@ export default class Drawer {
 
   private HEIGHT: number;
 
-  private map: TMap;
+  private readonly map: TMap;
 
   private readonly MAP_WIDTH: number;
 
@@ -26,9 +28,9 @@ export default class Drawer {
 
   private readonly CELL_WIDTH: number;
 
-  private CELL_HEIGHT: number;
+  private readonly CELL_HEIGHT: number;
 
-  private _lastTime: number;
+  private path: Array<Cell> = [];
 
   constructor(options: TDrawerOptions) {
     const { canvas, map } = options;
@@ -58,9 +60,11 @@ export default class Drawer {
     window.addEventListener('resize', this.handleResize.bind(this));
   }
 
-  private update(dt: number) {}
+  private update() {
+    // ...
+  }
 
-  private render(dt: number) {
+  private render() {
     this.context.clearRect(0, 0, this.WIDTH, this.HEIGHT);
 
     const canvasCenterX = this.WIDTH / 2;
@@ -84,23 +88,66 @@ export default class Drawer {
           this.CELL_WIDTH,
           this.CELL_HEIGHT
         );
+
+        const text = `[${x}, ${y}]`;
+        const textWidth = this.context.measureText(text).width;
+        const textHeight = 20;
+
+        this.context.fillStyle = '#000';
+        this.context.fillText(
+          text,
+          cellX + (this.CELL_WIDTH - textWidth) / 2,
+          cellY + (this.CELL_HEIGHT - textHeight) / 2
+        );
+
+        const weightText = `${cell}`;
+        const weightTextWidth = this.context.measureText(weightText).width;
+        const weightTextHeight = 20;
+
+        this.context.fillStyle = '#000';
+        this.context.fillText(
+          weightText,
+          cellX + (this.CELL_WIDTH - weightTextWidth) / 2,
+          cellY + (this.CELL_HEIGHT - weightTextHeight) / 2 + 10
+        );
+
+        const isInPath = this.path.some(
+          (pathCell) => pathCell.X === y && pathCell.Y === x
+        );
+
+        if (isInPath) {
+          this.context.fillStyle = 'rgba(0, 255, 0, 0.5)';
+          this.context.fillRect(
+            cellX,
+            cellY,
+            this.CELL_WIDTH,
+            this.CELL_HEIGHT
+          );
+        }
       });
     });
   }
 
   private tick() {
-    const now = performance.now();
-    const dt = now - this._lastTime;
+    this.update();
+    this.render();
 
-    this.update(dt);
-    this.render(dt);
-
-    this._lastTime = now;
     requestAnimationFrame(this.tick.bind(this));
   }
 
   public start() {
-    this._lastTime = performance.now();
     requestAnimationFrame(this.tick.bind(this));
+  }
+
+  public findPath(start: Cell, end: Cell) {
+    const aStar = new AStarAlgorithm(this.map, start, end);
+    const path = aStar.findPath();
+
+    console.log('Path:');
+    console.log(path.map(({ X, Y }) => `[${Y} ${X}]`).join(' -> '));
+    console.log('Table of neighbours:');
+    console.log(aStar.neighboursList);
+
+    this.path = path;
   }
 }
