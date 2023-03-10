@@ -31,6 +31,7 @@ export default class AStarAlgorithm {
     this.validateInput();
 
     this._openList.push([this.start, null]);
+    this.neighbours.push(this.start);
   }
 
   private validateInput() {
@@ -131,6 +132,7 @@ export default class AStarAlgorithm {
         if (X === this.end.X && Y === this.end.Y) {
           this._closedList.push(q);
           this._closedList.push([new Cell(X, Y, f, g, h), q[0]]);
+          this.neighbours.push(new Cell(X, Y, f, g, h));
           endFound = true;
           break;
         }
